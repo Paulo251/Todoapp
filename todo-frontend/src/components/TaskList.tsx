@@ -1,9 +1,11 @@
-"use client"; // Required for Next.js 13+ when using hooks
+"use client";
 
 import { useState, useEffect } from 'react';
 import { Task } from '../types/task';
 import { getTasks, createTask, updateTask, deleteTask } from '../services/api';
-import { TrashIcon } from '@heroicons/react/24/solid';
+import { TrashIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function TaskList() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -40,8 +42,10 @@ export default function TaskList() {
       });
       setTasks(prev => [...prev, newTask]);
       setNewTaskTitle('');
+      toast.success('Tarefa criada com sucesso!');
     } catch (err) {
       setError('Failed to create task');
+      toast.error('Erro ao criar tarefa');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -58,8 +62,20 @@ export default function TaskList() {
       setTasks(prev => prev.map(t => 
         t.id === task.id ? updatedTask : t
       ));
+      
+      if (updatedTask.completed) {
+        toast.success(
+          <div className="flex items-center">
+            <CheckCircleIcon className="h-5 w-5 mr-2 text-green-500" />
+            Tarefa concluída!
+          </div>
+        );
+      } else {
+        toast.info('Tarefa marcada como não concluída');
+      }
     } catch (err) {
       setError('Failed to update task');
+      toast.error('Erro ao atualizar tarefa');
       console.error(err);
     }
   };
@@ -68,14 +84,38 @@ export default function TaskList() {
     try {
       await deleteTask(id);
       setTasks(prev => prev.filter(task => task.id !== id));
+      toast.success(
+        <div className="flex items-center">
+          <TrashIcon className="h-5 w-5 mr-2 text-red-500" />
+          Tarefa removida com sucesso!
+        </div>,
+        {
+          icon: false
+        }
+      );
     } catch (err) {
       setError('Failed to delete task');
+      toast.error('Erro ao remover tarefa');
       console.error(err);
     }
   };
 
   return (
     <div className="max-w-md mx-auto p-4">
+      {/* Adicione o ToastContainer uma vez no componente */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+      
       <h1 className="text-2xl font-bold mb-4">Todo List</h1>
       
       {error && (
